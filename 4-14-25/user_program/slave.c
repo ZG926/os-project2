@@ -25,7 +25,7 @@ int main (int argc, char* argv[])
 	char *kernel_address, *file_address;
 	strcpy(file_name, argv[2]);
 	strcpy(method, argv[3]);
-
+	strcpy(ip, argv[4]);
 	if( (dev_fd = open("/dev/slave_device", O_RDWR)) < 0)//should be O_RDWR for PROT_WRITE when mmap()
 	{
 		perror("failed to open /dev/slave_device\n");

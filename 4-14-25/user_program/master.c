@@ -24,8 +24,8 @@ int main (int argc, char* argv[])
 	struct timeval start;
 	struct timeval end;
 	double trans_time; //calulate the time between the device is opened and it is closed
-
-
+	strcpy(file_name, argv[2]);
+	strcpy(method, argv[3]);
 	if( (dev_fd = open("/dev/master_device", O_RDWR)) < 0)
 	{
 		perror("failed to open /dev/master_device\n");

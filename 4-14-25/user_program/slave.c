@@ -56,6 +56,20 @@ int main (int argc, char* argv[])
 				file_size += ret;
 			}while(ret > 0);
 			break;
+		case 'm':
+			while (1) {
+				ret = ioctl(dev_fd, 0x12345678);
+				if (ret == 0) {
+					file_size = offset;
+					break;
+				}
+				fallocate(file_fd, 0, offset, ret);
+				file_address = mmap(NULL, ret, PROT_WRITE, MAP_SHARED, file_fd, offset);
+				kernel_address = mmap(NULL, ret, PROT_READ, MAP_SHARED, dev_fd, offset);
+				memcpy(file_address, kernel_address, ret);
+				offset += ret;
+			}
+			break;
 	}
 
 

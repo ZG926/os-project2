@@ -58,13 +58,52 @@ static mm_segment_t old_fs;
 static int addr_len;
 //static  struct mmap_info *mmap_msg; // pointer to the mapped data in this device
 
+
+//
+static int mmap_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
+{
+	vmf->page = virt_to_page(vma->vm_private_data);
+	get_page(vmf->page);
+	return 0;
+}
+void mmap_open(struct vm_area_struct *vma)
+{
+	/* Do nothing */
+}
+void mmap_close(struct vm_area_struct *vma)
+{
+	/* Do nothing */
+}
+static const struct vm_operations_struct my_vm_ops = {
+	.open = mmap_open,
+	.close = mmap_close,
+	//.fault = mmap_fault
+};
+
+static int my_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	io_remap_pfn_range(vma,
+		vma->vm_start,
+		virt_to_phys(file->private_data) >> PAGE_SHIFT,
+                vma->vm_end - vma->vm_start,
+		vma->vm_page_prot);
+	vma->vm_ops = &my_vm_ops;
+	vma->vm_flags |= VM_RESERVED;
+	vma->vm_private_data = file->private_data;
+	mmap_open(vma);
+	return 0;
+}
+//
+
+
 //file operations
 static struct file_operations master_fops = {
 	.owner = THIS_MODULE,
 	.unlocked_ioctl = master_ioctl,
 	.open = master_open,
 	.write = send_msg,
-	.release = master_close
+	.release = master_close,
+	.mmap = my_mmap
 };
 
 //device info
@@ -73,6 +112,8 @@ static struct miscdevice master_dev = {
 	.name = "master_device",
 	.fops = &master_fops
 };
+
+
 
 static int __init master_init(void)
 {
@@ -210,7 +251,6 @@ static ssize_t send_msg(struct file *file, const char __user *buf, size_t count,
 	return count;
 
 }
-
 
 
 

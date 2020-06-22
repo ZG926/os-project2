@@ -26,6 +26,7 @@ int main (int argc, char* argv[])
 	strcpy(file_name, argv[2]);
 	strcpy(method, argv[3]);
 	strcpy(ip, argv[4]);
+	int offset = 0;
 	if( (dev_fd = open("/dev/slave_device", O_RDWR)) < 0)//should be O_RDWR for PROT_WRITE when mmap()
 	{
 		perror("failed to open /dev/slave_device\n");
@@ -55,6 +56,20 @@ int main (int argc, char* argv[])
 				write(file_fd, buf, ret); //write to the input file
 				file_size += ret;
 			}while(ret > 0);
+			break;
+		case 'm':
+			while (1) {
+				ret = ioctl(dev_fd, 0x12345678);
+				if (ret == 0) {
+					file_size = offset;
+					break;
+				}
+				fallocate(file_fd, 0, offset, ret);
+				file_address = mmap(NULL, ret, PROT_WRITE, MAP_SHARED, file_fd, offset);
+				kernel_address = mmap(NULL, ret, PROT_READ, MAP_SHARED, dev_fd, offset);
+				memcpy(file_address, kernel_address, ret);
+				offset += ret;
+			}
 			break;
 	}
 

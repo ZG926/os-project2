@@ -24,6 +24,9 @@ int main (int argc, char* argv[])
 	struct timeval start;
 	struct timeval end;
 	double trans_time; //calulate the time between the device is opened and it is closed
+	int data_sent,len;
+	char *src_address;
+	char *dst_address;
 	strcpy(file_name, argv[2]);
 	strcpy(method, argv[3]);
 	if( (dev_fd = open("/dev/master_device", O_RDWR)) < 0)
@@ -61,6 +64,38 @@ int main (int argc, char* argv[])
 				write(dev_fd, buf, ret);//write to the the device
 			}while(ret > 0);
 			break;
+        case 'm': //mmap
+		while(data_sent < file_size)
+		{
+			if(src_address = mmap(0, PAGE_SIZE, PROT_READ, MAP_SHARED, file_fd, data_sent) == (void *) -1)
+			{
+				perror("file mapped, error");
+				exit(0);
+			}
+
+			if( dst_address = mmap(0, PAGE_SIZE, PROT_WRITE, MAP_SHARED, dev_fd, data_sent) == (void *) -1)
+			{
+				perror("device mapped error");
+				exit(0);
+			}
+
+
+			do
+			{
+				len = BUF_SIZE;
+				if(file_size - data_sent < BUF_SIZE)
+					len = file_size - data_sent;
+				memcpy(dst_address, src_address, len);
+				ioctl(dev_fd, 0x12345678, len);
+				data_sent += len;
+			} while(data_sent % PAGE_SIZE != 0 && data_sent < file_size);
+
+			ioctl(dev_fd, 0, (unsigned long)src_address);
+
+			munmap(src_address, PAGE_SIZE);
+
+		}
+        break;
 	}
 
 	if(ioctl(dev_fd, 0x12345679) == -1) // end sending data, close the connection

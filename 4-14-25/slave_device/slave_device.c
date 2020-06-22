@@ -186,7 +186,7 @@ static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long
 			break;
 		case slave_IOCTL_MMAP:
 			//Added
-			while (1) {
+			while (1){
 				data_size = krecv(sockfd_cli, buf, sizeof(buf), 0);
 				if (data_size == 0) break;
 				memcpy(file->private_data + offset, buf, data_size);
